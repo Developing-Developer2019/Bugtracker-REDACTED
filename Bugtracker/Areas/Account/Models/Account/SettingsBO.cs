@@ -1,4 +1,4 @@
-﻿using Bugtracker.Models.Common.Account;
+﻿using Bugtracker.Models.Common.Enum;
 using System.ComponentModel.DataAnnotations;
 
 namespace Bugtracker.Models.Account
@@ -20,7 +20,7 @@ namespace Bugtracker.Models.Account
         [Display(Name = "Password")]
         public string? Password { get; set; }
 
-        public SettingTypeEnum SettingType { get; set; }
+        public SettingType SettingType { get; set; }
 
         [DataType(DataType.Password)]
         [Display(Name = "Current password")]

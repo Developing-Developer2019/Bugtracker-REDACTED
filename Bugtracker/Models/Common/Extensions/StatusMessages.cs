@@ -1,4 +1,4 @@
-﻿namespace Bugtracker.Models.Common.Status
+﻿namespace Bugtracker.Models.Common.Extensions
 {
     public static class StatusMessages
     {

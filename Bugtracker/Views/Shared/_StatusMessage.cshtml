@@ -1,4 +1,4 @@
-﻿@using Bugtracker.Models.Common.Status
+﻿@using Bugtracker.Models.Common.Enum
 @model Bugtracker.Models.Common.CommonDTO
 
 @if (!String.IsNullOrEmpty(Model.Status.StatusMessage))
@@ -7,10 +7,10 @@
 
     switch (Model.Status.StatusType)
     {
-        case StatusEnum.Success:
+        case Status.Success:
             statusClass = "success";
             break;
-        case StatusEnum.Error:
+        case Status.Error:
             statusClass = "danger";
             break;
         default:

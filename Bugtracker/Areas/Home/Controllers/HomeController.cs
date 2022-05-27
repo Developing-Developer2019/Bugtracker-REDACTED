@@ -5,8 +5,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
-namespace Bugtracker.Controllers
+namespace Bugtracker.Areas.Home.Controllers
 {
+    [Area("Home")]
     public class HomeController : Controller
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -26,7 +27,7 @@ namespace Bugtracker.Controllers
         {
             if (!_signInManager.IsSignedIn(User))
             {
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction("Login", "Account", new { Area = "Account" });
             }
 
             return View();

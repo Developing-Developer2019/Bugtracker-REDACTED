@@ -1,0 +1,49 @@
+﻿@using Bugtracker.Models.Common.Enum
+@model Bugtracker.Models.Account.AccountDTO
+@{
+    ViewData["Title"] = "Profile";
+    string detailActive = Model.Settings.SettingType == SettingType.Details ? "active disabled" : "";
+    string passwordActive = Model.Settings.SettingType == SettingType.Password ? "active disabled" : "";
+    string emailActive = Model.Settings.SettingType == SettingType.Email ? "active disabled" : "";
+}
+
+<h3>@ViewData["Title"]</h3>
+<partial name="_StatusMessage" />
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs">
+                    <li class="nav-item">
+                        @Html.ActionLink("Details", "Settings", "Account", new { settingType = SettingType.Details }, new { @class ="nav-link detailActive"} )
+                    </li>
+                    <li class="nav-item">
+                         @Html.ActionLink("Email", "Settings", "Account", new { settingType = SettingType.Email }, new { @class ="nav-link passwordActive"} )
+                    </li>
+                    <li class="nav-item">
+                        @Html.ActionLink("Password", "Settings", "Account", new { settingType = SettingType.Password }, new { @class ="nav-link emailActive"} )
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+        <div class="card-body">
+            @if (Model.Settings.SettingType == SettingType.Details)
+            {
+                <partial name="_Details" />
+            }
+            @if (Model.Settings.SettingType == SettingType.Email)
+            {
+                <partial name="_Email" />
+            }
+            @if (Model.Settings.SettingType == SettingType.Password)
+            {
+                <partial name="_Password" />
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,6 +1,6 @@
-﻿namespace Bugtracker.Models.Common.Status
+﻿namespace Bugtracker.Models.Common.Enum
 {
-    public enum StatusEnum
+    public enum Status
     {
         Active = 1,
         Deleted = 2,

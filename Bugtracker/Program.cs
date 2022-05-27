@@ -9,8 +9,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));;
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => 
-    options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<ApplicationDbContext>();;
+    options.SignIn.RequireConfirmedAccount = false)
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -41,8 +41,17 @@ app.UseRouting();
 app.UseAuthentication();;
 app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.UseEndpoints(routes =>
+{
+    routes.MapAreaControllerRoute(
+        name: "default",
+        areaName: "Home",
+            pattern: "{area=Home}/{controller=Home}/{action=Index}/{id?}");
+    routes.MapAreaControllerRoute(
+        name: "areas",
+        areaName: "Account",
+            pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+    routes.MapRazorPages();
+});
 
 app.Run();

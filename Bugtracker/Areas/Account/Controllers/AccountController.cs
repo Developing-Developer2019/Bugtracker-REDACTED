@@ -8,10 +8,11 @@ using Microsoft.AspNetCore.WebUtilities;
 using System.Text;
 using System.Text.Encodings.Web;
 using Bugtracker.Models.Common.Status;
-using Bugtracker.Models.Common.Account;
+using Bugtracker.Models.Common.Enum;
 
-namespace Bugtracker.Controllers
+namespace Bugtracker.Areas.Account.Controllers
 {
+    [Area("Account")]
     public class AccountController : Controller
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -80,7 +81,7 @@ namespace Bugtracker.Controllers
                 }
                 else
                 {
-                    account.Status = SetStatusDetails(StatusEnum.Error);
+                    account.Status = SetStatusDetails(Status.Error);
 
                     return RedirectToAction("Login", "Account", account.Status);
                 }
@@ -144,7 +145,7 @@ namespace Bugtracker.Controllers
             }
             else
             {
-                account.Status = SetStatusDetails(StatusEnum.Error);
+                account.Status = SetStatusDetails(Status.Error);
                 return View(account);
             }
             return View(account);
@@ -169,7 +170,7 @@ namespace Bugtracker.Controllers
         #region Settings
 
         [HttpGet]
-        public async Task<IActionResult> Settings(SettingTypeEnum settingType = SettingTypeEnum.Details)
+        public async Task<IActionResult> Settings(SettingType settingType = SettingType.Details)
         {
 
             var user = await _userManager.GetUserAsync(User);
@@ -210,7 +211,7 @@ namespace Bugtracker.Controllers
             }
 
             await _signInManager.RefreshSignInAsync(user);
-            account.Status = SetStatusDetails(StatusEnum.Success);
+            account.Status = SetStatusDetails(Status.Success);
             return View(new AccountDTO());
         }
 
@@ -218,19 +219,19 @@ namespace Bugtracker.Controllers
 
         #region UsageMethods
 
-        private StatusBO SetStatusDetails(StatusEnum status)
+        private StatusBO SetStatusDetails(Status status)
         {
             var StatusBO = new StatusBO();
 
             switch (status)
             {
-                case StatusEnum.Success:
+                case Status.Success:
                     StatusBO.StatusMessage = "Action successful";
-                    StatusBO.StatusType = StatusEnum.Success;
+                    StatusBO.StatusType = Status.Success;
                     break;
-                case StatusEnum.Error:
+                case Status.Error:
                     StatusBO.StatusMessage = "Error from Action";
-                    StatusBO.StatusType = StatusEnum.Error;
+                    StatusBO.StatusType = Status.Error;
                     break;
                 default:
                     break;
@@ -283,9 +284,9 @@ namespace Bugtracker.Controllers
 
             if (!ModelState.IsValid)
             {
-                account.Status = SetStatusDetails(StatusEnum.Error);
+                account.Status = SetStatusDetails(Status.Error);
                 return View("Settings", account);
-            }           
+            }
 
             var changePasswordResult = await _userManager.ChangePasswordAsync(user, settings.OldPassword, settings.NewPassword);
 
@@ -295,14 +296,14 @@ namespace Bugtracker.Controllers
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
-                account.Status = SetStatusDetails(StatusEnum.Error);
+                account.Status = SetStatusDetails(Status.Error);
                 return View("Settings", account);
             }
 
             await _signInManager.RefreshSignInAsync(user);
             _logger.LogInformation("User changed their password successfully.");
 
-            account.Status = SetStatusDetails(StatusEnum.Success);
+            account.Status = SetStatusDetails(Status.Success);
             return View("Settings", account);
         }
 
@@ -318,7 +319,7 @@ namespace Bugtracker.Controllers
                 Settings = settings
             };
 
-            account.Settings.SettingType = SettingTypeEnum.Email;
+            account.Settings.SettingType = SettingType.Email;
 
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
@@ -331,12 +332,12 @@ namespace Bugtracker.Controllers
                 var email = await _userManager.GetEmailAsync(user);
                 if (settings.NewEmail != email)
                 {
-                    account.Status = SetStatusDetails(StatusEnum.Success);
+                    account.Status = SetStatusDetails(Status.Success);
                     return View("Settings", account);
                 }
             }
 
-            account.Status = SetStatusDetails(StatusEnum.Error);
+            account.Status = SetStatusDetails(Status.Error);
             return View("Settings", account);
         }
 
