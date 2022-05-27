@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <Folder Include="Areas\Account\Data\" />
+    <Folder Include="Areas\Bug\Data\" />
     <Folder Include="Areas\Home\Data\" />
     <Folder Include="Areas\Home\Models\" />
   </ItemGroup>

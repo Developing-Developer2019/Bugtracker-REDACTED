@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Bugtracker.Models.Common.Extensions;
+using System.ComponentModel.DataAnnotations;
 
 namespace Bugtracker.Models.Account
 {
-    public class RegisterBO
+    public class RegisterBO : BaseEntity<int>
     {
         [Display(Name = "Username")]
         public string? UserName { get; set; }

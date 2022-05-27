@@ -1,7 +1,9 @@
 ﻿using Bugtracker.Areas.Identity.Data;
+using Bugtracker.Models.Account;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Bugtracker.Areas.Bug.Models.Bug;
 
 namespace Bugtracker.Areas.Identity.Data;
 
@@ -49,4 +51,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.ToTable("UserTokens");
         });
     }
+
+    public DbSet<Bugtracker.Areas.Bug.Models.Bug.BugBO>? Bug { get; set; }
 }

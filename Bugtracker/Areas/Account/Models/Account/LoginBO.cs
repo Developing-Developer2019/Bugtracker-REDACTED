@@ -1,8 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Bugtracker.Models.Common.Extensions;
+using System.ComponentModel.DataAnnotations;
 
 namespace Bugtracker.Models.Account
 {
-    public class LoginBO
+    public class LoginBO : BaseEntity<int>
     {
         [EmailAddress]
         [Display(Name = "Email")]

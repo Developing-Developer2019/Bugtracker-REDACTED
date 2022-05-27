@@ -1,9 +1,10 @@
 ﻿using Bugtracker.Models.Common.Enum;
+using Bugtracker.Models.Common.Extensions;
 using System.ComponentModel.DataAnnotations;
 
 namespace Bugtracker.Models.Account
 {
-    public class SettingsBO
+    public class SettingsBO : BaseEntity<int>
     {
         [Display(Name = "Username")]
         public string? UserName { get; set; }

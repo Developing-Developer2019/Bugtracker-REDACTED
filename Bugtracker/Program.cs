@@ -48,9 +48,13 @@ app.UseEndpoints(routes =>
         areaName: "Home",
             pattern: "{area=Home}/{controller=Home}/{action=Index}/{id?}");
     routes.MapAreaControllerRoute(
-        name: "areas",
+        name: "account",
         areaName: "Account",
-            pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+            pattern: "{area:exists}/{controller}/{action}/{id?}");
+    routes.MapAreaControllerRoute(
+       name: "bug",
+       areaName: "Bug",
+           pattern: "{area:exists}/{controller}/{action}/{id?}");
     routes.MapRazorPages();
 });
 
