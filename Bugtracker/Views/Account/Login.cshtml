@@ -1,4 +1,4 @@
-﻿@model Bugtracker.Models.Account.AccountBO
+﻿@model Bugtracker.Models.Account.AccountDTO
 
 <div class="row">
     <div class="col-md-12">
@@ -6,26 +6,26 @@
             <div class="card">
                     <div class="card-header">
                         <h1>Login to your account.</h1>
-                        <h3>You will need an account or to register an account to gain access to the Bugtracker</h3>
+                        <h5>You will need an account or to register an account to gain access to the Bugtracker</h5>
                     </div>
                     <div class="card-body">
                         <form id="account" method="post">
                             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                             <div class="form-group">
-                                <label asp-for="Email" class="form-label"></label>
-                                <input asp-for="Email" class="form-control" autocomplete="username" aria-required="true" />
-                                <span asp-validation-for="Email" class="text-danger"></span>
+                                <label asp-for="Login.Email" class="form-label"></label>
+                                <input asp-for="Login.Email" class="form-control" autocomplete="username" aria-required="true" />
+                                <span asp-validation-for="Login.Email" class="text-danger"></span>
                             </div>
                             <div class="form-group">
-                                <label asp-for="Password" class="form-label"></label>
-                                <input asp-for="Password" class="form-control" autocomplete="current-password" aria-required="true" />
-                                <span asp-validation-for="Password" class="text-danger"></span>
+                                <label asp-for="Login.Password" class="form-label"></label>
+                                <input asp-for="Login.Password" class="form-control" autocomplete="current-password" aria-required="true" />
+                                <span asp-validation-for="Login.Password" class="text-danger"></span>
                             </div>
                             <div class="form-group">
                                 <div class="checkbox">
-                                    <label asp-for="RememberMe" class="form-label px-4">
-                                        <input class="form-check-input" asp-for="RememberMe" />
-                                        @Html.DisplayNameFor(m => m.RememberMe)
+                                    <label asp-for="Login.RememberMe" class="form-label px-4">
+                                        <input class="form-check-input" asp-for="Login.RememberMe" />
+                                        @Html.DisplayNameFor(m => m.Login.RememberMe)
                                     </label>
                                 </div>
                             </div>

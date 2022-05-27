@@ -2,13 +2,13 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Bugtracker.Models.Common;
 using Bugtracker.Models.Account;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using Bugtracker.Areas.Identity.Pages.Account;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Text;
 using System.Text.Encodings.Web;
+using Bugtracker.Models.Common.Status;
+using Bugtracker.Models.Common.Account;
 
 namespace Bugtracker.Controllers
 {
@@ -20,12 +20,14 @@ namespace Bugtracker.Controllers
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
         private readonly IEmailSender _emailSender;
         private readonly ILogger<AccountController> _logger;
+        private readonly ApplicationDbContext _context;
 
         public AccountController(UserManager<ApplicationUser> userManager,
                                  IUserStore<ApplicationUser> userStore,
                                  SignInManager<ApplicationUser> signInManager,
                                  ILogger<AccountController> logger,
-                                 IEmailSender emailSender)
+                                 IEmailSender emailSender,
+                                 ApplicationDbContext context)
         {
             _signInManager = signInManager;
             _userManager = userManager;
@@ -33,30 +35,39 @@ namespace Bugtracker.Controllers
             _emailStore = GetEmailStore();
             _emailSender = emailSender;
             _logger = logger;
+            _context = context;
         }
 
+        #region Login
+
         [HttpGet]
-        public async Task<IActionResult> Login(ErrorBO ErrorMessage)
+        public async Task<IActionResult> Login(StatusBO? status)
         {
-            if (!string.IsNullOrEmpty(ErrorMessage.ErrorMessage))
+            var account = new AccountDTO();
+
+            if (!string.IsNullOrEmpty(status?.StatusMessage))
             {
-                ModelState.AddModelError(string.Empty, ErrorMessage.ErrorMessage);
+                account.Status = SetStatusDetails(status.StatusType);
+            }
+            else
+            {
+                // Clear the existing external cookie to ensure a clean login process
+                await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
             }
 
-            // Clear the existing external cookie to ensure a clean login process
-            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
-
-            return View();
+            return View(account);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(AccountBO account)
+        public async Task<IActionResult> Login(LoginBO login)
         {
+            var account = new AccountDTO { Login = login };
+
             if (ModelState.IsValid)
             {
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-                var result = await _signInManager.PasswordSignInAsync(account.Email, account.Password, account.RememberMe, lockoutOnFailure: false);
+                var result = await _signInManager.PasswordSignInAsync(login.Email, login.Password, login.RememberMe, lockoutOnFailure: true);
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in.");
@@ -69,8 +80,9 @@ namespace Bugtracker.Controllers
                 }
                 else
                 {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return View(account);
+                    account.Status = SetStatusDetails(StatusEnum.Error);
+
+                    return RedirectToAction("Login", "Account", account.Status);
                 }
             }
 
@@ -78,22 +90,33 @@ namespace Bugtracker.Controllers
             return View(account);
         }
 
+        #endregion
+
+        #region Register
+
         [HttpGet]
         public IActionResult Register()
         {
-            return View(new AccountBO());
+            return View(new RegisterBO());
         }
 
         [HttpPost]
-        public async Task<IActionResult> Register(AccountBO account)
+        public async Task<IActionResult> Register(RegisterBO register)
         {
+            var account = new AccountDTO
+            {
+                Register = register
+            };
+
+            IdentityResult? result;
+
             if (ModelState.IsValid)
             {
                 var user = CreateUser();
 
-                await _userStore.SetUserNameAsync(user, account.Email, CancellationToken.None);
-                await _emailStore.SetEmailAsync(user, account.Email, CancellationToken.None);
-                var result = await _userManager.CreateAsync(user, account.Password);
+                await _userStore.SetUserNameAsync(user, register.UserName, CancellationToken.None);
+                await _emailStore.SetEmailAsync(user, register.Email, CancellationToken.None);
+                result = await _userManager.CreateAsync(user, register.Password);
 
                 if (result.Succeeded)
                 {
@@ -102,15 +125,6 @@ namespace Bugtracker.Controllers
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-                    //var callbackUrl = Url.Page(
-                    //    "/Account/ConfirmEmail",
-                    //    pageHandler: null,
-                    //    values: new { area = "Identity", userId = userId, code = code },
-                    //    protocol: Request.Scheme);
-
-                    //await _emailSender.SendEmailAsync(account.Email, "Confirm your email",
-                    //    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
                     {
@@ -122,24 +136,107 @@ namespace Bugtracker.Controllers
                         return RedirectToAction("Index", "Home");
                     }
                 }
+
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
             }
-
-            // If we got this far, something failed, redisplay form
+            else
+            {
+                account.Status = SetStatusDetails(StatusEnum.Error);
+                return View(account);
+            }
             return View(account);
         }
+
+        #endregion
+
+        #region Logout
 
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
             _logger.LogInformation("User logged out.");
-             
+
             // This needs to be a redirect so that the browser performs a new
             // request and the identity for the user gets updated.
             return RedirectToAction("Index", "Home");
+        }
+
+        #endregion
+
+        #region Settings
+
+        [HttpGet]
+        public async Task<IActionResult> Settings(SettingTypeEnum settingType = SettingTypeEnum.Details)
+        {
+
+            var user = await _userManager.GetUserAsync(User);
+            var account = new AccountDTO();
+            account.Settings.UserName = user.UserName;
+            account.Settings.Email = user.Email;
+            account.Settings.SettingType = settingType;
+
+            if (user == null)
+            {
+                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+            }
+
+            //var userName = await _userManager.GetUserNameAsync(user);
+            //var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
+
+            return View(account);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Settings(SettingsBO settings)
+        {
+            AccountDTO account = new AccountDTO
+            {
+                Settings = settings
+            };
+
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                ModelState.AddModelError("", $"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(account);
+            }
+
+            await _signInManager.RefreshSignInAsync(user);
+            account.Status = SetStatusDetails(StatusEnum.Success);
+            return View(new AccountDTO());
+        }
+
+        #endregion
+
+        #region UsageMethods
+
+        private StatusBO SetStatusDetails(StatusEnum status)
+        {
+            var StatusBO = new StatusBO();
+
+            switch (status)
+            {
+                case StatusEnum.Success:
+                    StatusBO.StatusMessage = "Action successful";
+                    StatusBO.StatusType = StatusEnum.Success;
+                    break;
+                case StatusEnum.Error:
+                    StatusBO.StatusMessage = "Error from Action";
+                    StatusBO.StatusType = StatusEnum.Error;
+                    break;
+                default:
+                    break;
+            }
+
+            return StatusBO;
         }
 
         private ApplicationUser CreateUser()
@@ -164,5 +261,85 @@ namespace Bugtracker.Controllers
             }
             return (IUserEmailStore<ApplicationUser>)_userStore;
         }
+
+        #endregion
+
+        #region ChangePassword
+
+        [HttpPost]
+        public async Task<IActionResult> ChangePassword(SettingsBO settings)
+        {
+            var account = new AccountDTO
+            {
+                Settings = settings
+            };
+
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, $"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                account.Status = SetStatusDetails(StatusEnum.Error);
+                return View("Settings", account);
+            }           
+
+            var changePasswordResult = await _userManager.ChangePasswordAsync(user, settings.OldPassword, settings.NewPassword);
+
+            if (!changePasswordResult.Succeeded)
+            {
+                foreach (var error in changePasswordResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                account.Status = SetStatusDetails(StatusEnum.Error);
+                return View("Settings", account);
+            }
+
+            await _signInManager.RefreshSignInAsync(user);
+            _logger.LogInformation("User changed their password successfully.");
+
+            account.Status = SetStatusDetails(StatusEnum.Success);
+            return View("Settings", account);
+        }
+
+        #endregion
+
+        #region ChangeEmail
+
+        [HttpPost]
+        public async Task<IActionResult> ChangeEmail(SettingsBO settings)
+        {
+            var account = new AccountDTO
+            {
+                Settings = settings
+            };
+
+            account.Settings.SettingType = SettingTypeEnum.Email;
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+            }
+
+            if (ModelState.IsValid)
+            {
+                var email = await _userManager.GetEmailAsync(user);
+                if (settings.NewEmail != email)
+                {
+                    account.Status = SetStatusDetails(StatusEnum.Success);
+                    return View("Settings", account);
+                }
+            }
+
+            account.Status = SetStatusDetails(StatusEnum.Error);
+            return View("Settings", account);
+        }
+
+        #endregion
     }
 }

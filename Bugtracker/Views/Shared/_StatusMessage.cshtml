@@ -1,10 +1,25 @@
-﻿@model Bugtracker.Models.Common.ErrorBO
+﻿@using Bugtracker.Models.Common.Status
+@model Bugtracker.Models.Common.CommonDTO
 
-@if (!String.IsNullOrEmpty(Model.ErrorMessage))
+@if (!String.IsNullOrEmpty(Model.Status.StatusMessage))
 {
-    var statusMessageClass = Model.ErrorMessage.StartsWith("Error") ? "danger" : "success";
-    <div class="alert alert-@statusMessageClass alert-dismissible" role="alert">
+    string? statusClass = "info";
+
+    switch (Model.Status.StatusType)
+    {
+        case StatusEnum.Success:
+            statusClass = "success";
+            break;
+        case StatusEnum.Error:
+            statusClass = "danger";
+            break;
+        default:
+            statusClass = "info";
+            break;
+    }
+
+    <div class="alert alert-@statusClass alert-dismissible" role="alert">
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        <h5>@Model.ErrorMessage</h5>
+        <h5>@Model.Status.StatusMessage</h5>
     </div>
 }
